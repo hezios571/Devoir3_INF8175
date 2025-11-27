@@ -170,8 +170,19 @@ class DigitClassificationModel(object):
     """
 
     def __init__(self) -> None:
-        # Initialize your model parameters here
         "*** TODO: COMPLETE HERE FOR QUESTION 3 ***"
+
+        hidden = 150
+
+        # Parametres couche 1
+        self.W1 = nn.Parameter(784, hidden)
+        self.b1 = nn.Parameter(1, hidden)
+
+        # Parametres couche 2
+        self.W2 = nn.Parameter(hidden, 10)
+        self.b2 = nn.Parameter(1, 10)
+
+        self.parameters = [self.W1, self.b1, self.W2, self.b2]
 
     def run(self, x: nn.Constant) -> nn.Node:
         """
@@ -188,6 +199,13 @@ class DigitClassificationModel(object):
                 (also called logits)
         """
         "*** TODO: COMPLETE HERE FOR QUESTION 3 ***"
+        # Couche 1
+        z1 = nn.AddBias(nn.Linear(x, self.W1), self.b1)
+        h1 = nn.ReLU(z1)
+
+        # Couche 2 
+        logits = nn.AddBias(nn.Linear(h1, self.W2), self.b2)
+        return logits
 
     def get_loss(self, x: nn.Constant, y: nn.Constant) -> nn.Node:
         """
@@ -203,9 +221,31 @@ class DigitClassificationModel(object):
         Returns: a loss node
         """
         "*** TODO: COMPLETE HERE FOR QUESTION 3 ***"
+        logits = self.run(x)
+        return nn.SoftmaxLoss(logits, y)
 
     def train(self, dataset: DigitClassificationDataset) -> None:
         """
         Trains the model.
         """
         "*** TODO: COMPLETE HERE FOR QUESTION 3 ***"
+        batch_size = 200
+        lr = 0.08
+        check_every = 200
+
+        # genere les batchs jusqua ce que le seuil est verifier
+        i = 0
+        for x, y in dataset.iterate_forever(batch_size):
+            i += 1
+            loss = self.get_loss(x, y)
+            grads = nn.gradients(loss, self.parameters)
+
+            
+            for p, g in zip(self.parameters, grads):
+                p.update(g, -lr)
+
+            # verifies la validation tous les 200 batchs pour run plus vite
+            if i % check_every == 0:
+                if dataset.get_validation_accuracy() >= 0.973:
+                    break
+
