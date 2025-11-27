@@ -101,6 +101,7 @@ class RegressionModel(object):
         """
         "*** TODO: COMPLETE HERE FOR QUESTION 2 ***"
 
+        # Calcul intermediaire et sortie du neurone
         z1 = nn.AddBias(nn.Linear(x, self.w1), self.b1)
         a1 = nn.ReLU(z1)
 
@@ -139,6 +140,8 @@ class RegressionModel(object):
         while True:
             for x, y in dataset.iterate_once(taille_des_mini_batchs):
                 pertes = self.get_loss(x, y)
+
+                # Gradient de chaque parametre (backpropagation)
                 grad_w1, grad_b1, grad_w2, grad_b2, grad_w3, grad_b3 = nn.gradients(pertes,[self.w1, self.b1, self.w2, self.b2, self.w3, self.b3])
                 self.w1.update(grad_w1, -taux_apprentissage)
                 self.b1.update(grad_b1, -taux_apprentissage)
