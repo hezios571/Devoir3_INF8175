@@ -78,6 +78,18 @@ class RegressionModel(object):
         # Initialize your model parameters here
         "*** TODO: COMPLETE HERE FOR QUESTION 2 ***"
 
+        dimension_des_couches_cachees = 150
+
+        self.w1 = nn.Parameter(1, dimension_des_couches_cachees)
+        self.b1 = nn.Parameter(1, dimension_des_couches_cachees)
+
+        self.w2 = nn.Parameter(dimension_des_couches_cachees, dimension_des_couches_cachees)
+        self.b2 = nn.Parameter(1, dimension_des_couches_cachees)
+
+        self.w3 = nn.Parameter(dimension_des_couches_cachees, 1)
+        self.b3 = nn.Parameter(1, 1)
+
+
     def run(self, x: nn.Constant) -> nn.Node:
         """
         Runs the model for a batch of examples.
@@ -88,6 +100,15 @@ class RegressionModel(object):
             A node with shape (batch_size x 1) containing predicted y-values
         """
         "*** TODO: COMPLETE HERE FOR QUESTION 2 ***"
+
+        z1 = nn.AddBias(nn.Linear(x, self.w1), self.b1)
+        a1 = nn.ReLU(z1)
+
+        z2 = nn.AddBias(nn.Linear(a1, self.w2), self.b2)
+        a2 = nn.ReLU(z2)
+
+        return nn.AddBias(nn.Linear(a2, self.w3), self.b3)
+
 
     def get_loss(self, x: nn.Constant, y: nn.Constant) -> nn.Node:
         """
@@ -101,11 +122,33 @@ class RegressionModel(object):
         """
         "*** TODO: COMPLETE HERE FOR QUESTION 2 ***"
 
+        y_predicted = self.run(x)
+        return nn.SquareLoss(y_predicted, y)
+
+
     def train(self, dataset: RegressionDataset) -> None:
         """
         Trains the model.
         """
         "*** TODO: COMPLETE HERE FOR QUESTION 2 ***"
+
+        taux_apprentissage = 0.05
+        taille_des_mini_batchs = 100
+        taux_de_perte = 0.015
+
+        while True:
+            for x, y in dataset.iterate_once(taille_des_mini_batchs):
+                pertes = self.get_loss(x, y)
+                grad_w1, grad_b1, grad_w2, grad_b2, grad_w3, grad_b3 = nn.gradients(pertes,[self.w1, self.b1, self.w2, self.b2, self.w3, self.b3])
+                self.w1.update(grad_w1, -taux_apprentissage)
+                self.b1.update(grad_b1, -taux_apprentissage)
+                self.w2.update(grad_w2, -taux_apprentissage)
+                self.b2.update(grad_b2, -taux_apprentissage)
+                self.w3.update(grad_w3, -taux_apprentissage)
+                self.b3.update(grad_b3, -taux_apprentissage)
+
+            if nn.as_scalar(pertes) < taux_de_perte:
+                break
 
 
 class DigitClassificationModel(object):
