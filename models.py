@@ -175,14 +175,18 @@ class DigitClassificationModel(object):
         hidden = 150
 
         # Parametres couche 1
-        self.W1 = nn.Parameter(784, hidden)
+        self.w1 = nn.Parameter(784, hidden)
         self.b1 = nn.Parameter(1, hidden)
 
         # Parametres couche 2
-        self.W2 = nn.Parameter(hidden, 10)
-        self.b2 = nn.Parameter(1, 10)
+        self.w2 = nn.Parameter(hidden, hidden)
+        self.b2 = nn.Parameter(1, hidden)
 
-        self.parameters = [self.W1, self.b1, self.W2, self.b2]
+        # Parametres couche 3
+        self.w3 = nn.Parameter(hidden, 10)
+        self.b3 = nn.Parameter(1, 10)
+
+        self.parameters = [self.w1, self.b1, self.w2, self.b2, self.w3, self.b3]
 
     def run(self, x: nn.Constant) -> nn.Node:
         """
@@ -200,11 +204,14 @@ class DigitClassificationModel(object):
         """
         "*** TODO: COMPLETE HERE FOR QUESTION 3 ***"
         # Couche 1
-        z1 = nn.AddBias(nn.Linear(x, self.W1), self.b1)
+        z1 = nn.AddBias(nn.Linear(x, self.w1), self.b1)
         h1 = nn.ReLU(z1)
 
         # Couche 2 
-        logits = nn.AddBias(nn.Linear(h1, self.W2), self.b2)
+        z2 = nn.AddBias(nn.Linear(h1, self.w2), self.b2)
+        h2 = nn.ReLU(z2)
+
+        logits = nn.AddBias(nn.Linear(h2, self.w3), self.b3)
         return logits
 
     def get_loss(self, x: nn.Constant, y: nn.Constant) -> nn.Node:
@@ -230,7 +237,7 @@ class DigitClassificationModel(object):
         """
         "*** TODO: COMPLETE HERE FOR QUESTION 3 ***"
         batch_size = 200
-        lr = 0.08
+        learning_r = 0.08
         check_every = 200
 
         # genere les batchs jusqua ce que le seuil est verifier
@@ -240,12 +247,11 @@ class DigitClassificationModel(object):
             loss = self.get_loss(x, y)
             grads = nn.gradients(loss, self.parameters)
 
-            
             for p, g in zip(self.parameters, grads):
-                p.update(g, -lr)
+                p.update(g, -learning_r)
 
             # verifies la validation tous les 200 batchs pour run plus vite
             if i % check_every == 0:
-                if dataset.get_validation_accuracy() >= 0.973:
+                if dataset.get_validation_accuracy() >= 0.975:
                     break
 
